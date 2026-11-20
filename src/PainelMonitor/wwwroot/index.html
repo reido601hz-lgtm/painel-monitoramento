@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BROK - painel</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- Palco fixo 1024x600, tudo com position:absolute (o WebKit do Android 4.2 nao
+     resolve flexbox/float de forma confiavel). O script no fim escala o palco para
+     o viewport real do WebView (o PainelKiosk aplica zoom proprio de ~1.72x).
+     Layout inspirado no mock do Gemini (BROK Hardware Suite). -->
+<div id="stage">
+
+  <div class="topo">
+    <div class="marca" id="host">BROK</div>
+    <div class="chip" id="chip" style="display:none;"><i class="dot" id="dot"></i><span id="status">Sistemas operacionais OK</span></div>
+    <div class="relogio" id="clock">--:--:--</div>
+  </div>
+
+  <!-- CPU -->
+  <div class="card c1" style="top:54px;height:254px;">
+    <div class="tit">Processamento</div>
+    <div class="selo" id="cpuThreads" style="display:none;">-- threads</div>
+    <div class="gauge">
+      <svg width="160" height="160" viewBox="0 0 140 140">
+        <circle cx="70" cy="70" r="58" stroke="#16283a" stroke-width="18" fill="none"></circle>
+        <circle id="cpuCircle" cx="70" cy="70" r="58" stroke="#00F0FF" stroke-width="18" stroke-dasharray="364" stroke-dashoffset="364" stroke-linecap="butt" fill="none" transform="rotate(-90 70 70)"></circle>
+      </svg>
+      <div class="gauge-txt">
+        <div class="gauge-val" id="cpuVal">--%</div>
+        <div class="gauge-rot">CPU</div>
+      </div>
+    </div>
+    <div class="gauge-nome" id="cpuName" style="display:none;">CPU</div>
+    <div class="gauge-meta">
+      <b class="vt" id="cpuTemp">--</b><small>&deg;C</small><span style="display:none;"><b class="vw" id="cpuPower">--</b></span>
+    </div>
+  </div>
+
+  <!-- Memoria e VRAM -->
+  <div class="card c2" style="top:54px;height:112px;">
+    <div class="m" style="top:14px;">
+      <div class="lbl">Mem&oacute;ria<b id="ramText">--</b></div>
+      <div class="bar"><i id="ramBar"></i></div>
+    </div>
+    <div class="m" style="top:62px;">
+      <div class="lbl">VRAM<b id="vramText">--</b></div>
+      <div class="bar"><i id="vramBar"></i></div>
+    </div>
+  </div>
+
+  <!-- Nucleos e tempo ligado; com um jogo em primeiro plano vira FPS + frametime (app.js, /api/fps) -->
+  <div class="card c2" style="top:176px;height:132px;">
+    <div class="tit" id="nucTit">N&uacute;cleos</div>
+    <div class="selo2" id="uptime" style="display:none;">--</div>
+    <div class="selo2" id="ftJogo" style="display:none;"></div>
+    <div class="m" id="nucBox" style="top:38px;">
+      <div class="cores" id="cores"></div>
+    </div>
+    <div id="ftBox" style="display:none;">
+      <div class="ft-fps" id="ftFps">--</div>
+      <div class="ft-lbl">FPS</div>
+      <div class="ft-low" id="ftLow">--</div>
+      <svg class="ft-svg" width="194" height="70" viewBox="0 0 194 70">
+        <rect x="0" y="0" width="194" height="70" rx="4" ry="4" fill="#09111d"></rect>
+        <line id="ftRef1" x1="0" y1="35" x2="194" y2="35" stroke="#24405a" stroke-width="1" stroke-opacity="0"></line>
+        <line id="ftRef2" x1="0" y1="10" x2="194" y2="10" stroke="#24405a" stroke-width="1" stroke-opacity="0"></line>
+        <polyline id="ftLinha" fill="none" stroke="#22d3ee" stroke-width="3" stroke-linejoin="round" points=""></polyline>
+      </svg>
+      <div class="ft-cg" id="ftCg">--</div>
+    </div>
+  </div>
+
+  <!-- GPU -->
+  <div class="card c3" style="top:54px;height:254px;">
+    <div class="tit">Placa gr&aacute;fica</div>
+    <div class="selo" id="gpuBadge" style="display:none;">-- GB</div>
+    <div class="gauge">
+      <svg width="160" height="160" viewBox="0 0 140 140">
+        <circle cx="70" cy="70" r="58" stroke="#16283a" stroke-width="18" fill="none"></circle>
+        <circle id="gpuCircle" cx="70" cy="70" r="58" stroke="#00F0FF" stroke-width="18" stroke-dasharray="364" stroke-dashoffset="364" stroke-linecap="butt" fill="none" transform="rotate(-90 70 70)"></circle>
+      </svg>
+      <div class="gauge-txt">
+        <div class="gauge-val" id="gpuVal">--%</div>
+        <div class="gauge-rot">GPU</div>
+      </div>
+    </div>
+    <div class="gauge-nome" id="gpuName" style="display:none;">GPU</div>
+    <div class="gauge-meta">
+      <b class="vt" id="gpuTemp">--</b><small>&deg;C</small><span style="display:none;"><b class="vw" id="gpuPower">--</b><b class="vc" id="gpuClock">--</b></span>
+    </div>
+  </div>
+
+  <!-- Listas -->
+  <div class="card c1" style="top:320px;height:268px;">
+    <div class="tit">Ventoinhas</div>
+    <ul id="fans"></ul>
+  </div>
+  <div class="card c2" style="top:320px;height:268px;">
+    <div class="tit">Temperaturas</div>
+    <ul id="temps"></ul>
+  </div>
+  <div class="card c3" style="top:320px;height:268px;">
+    <div class="tit">Rede e discos</div>
+    <ul id="io"></ul>
+  </div>
+
+</div>
+
+<script src="app.js"></script>
+<script>
+/* Ajusta o palco 1024x600 ao viewport real do WebView. Reajusta de tempos em tempos
+   porque o WebView do Android 4.2 nem sempre dispara 'resize' ao mudar o zoom.
+
+   Medido no tablet (PainelKiosk): innerWidth=594, innerHeight=348, devicePixelRatio=1,
+   screen=1024x600, ou seja, o app aplica zoom de ~1,72x. Escalar com transform:scale()
+   fazia o texto ser rasterizado e reamostrado (embacado); a propriedade CSS zoom refaz o
+   layout e o texto sai renderizado no tamanho final (nitido). O WebView tem tamanho
+   minimo de fonte de ~8px CSS (~13,8px reais): por isso nenhuma fonte do style.css fica
+   abaixo de 14px. Palco colado a esquerda (sem centralizar): o tablet e sempre
+   1024x600 em tela cheia. */
+(function () {
+  var st = document.getElementById('stage');
+  var temZoom = ('zoom' in st.style);
+  var ultimo = '';
+  function fit() {
+    var w = window.innerWidth || document.documentElement.clientWidth;
+    var h = window.innerHeight || document.documentElement.clientHeight;
+    if (!w || !h) return;
+    var s = Math.min(w / 1024, h / 600);
+    var chave = s.toFixed(4);
+    if (chave === ultimo) return;
+    ultimo = chave;
+    st.style.left = '0px';
+    if (temZoom) {
+      st.style.zoom = s;
+    } else {
+      var t = 'scale(' + s + ')';
+      st.style.webkitTransform = t;
+      st.style.transform = t;
+    }
+  }
+  fit();
+  window.addEventListener('resize', fit, false);
+  setTimeout(fit, 300);
+  setTimeout(fit, 1500);
+  setInterval(fit, 2000);
+})();
+</script>
+</body>
+</html>

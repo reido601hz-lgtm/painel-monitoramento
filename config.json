@@ -1,0 +1,23 @@
+{
+  "_comentario": "Nomes dados as leituras genericas do LibreHardwareMonitor. Fonte: HWiNFO64 8.41 (GIGABYTE B660M GAMING DDR4 / ITE IT8689E), lido pela memoria compartilhada em 2026-11-16. A ordem de Temperature #1..#6 e a mesma do registrador do chip.",
+  "temperaturas": {
+    "Temperature #1": "Sistema 1",
+    "Temperature #2": "Chipset (PCH)",
+    "Temperature #3": "CPU (socket)",
+    "Temperature #4": "PCIe x16",
+    "Temperature #5": "VRM MOS",
+    "Temperature #6": "Sistema 2"
+  },
+  "fps": {
+    "_comentario": "FPS/frametime do jogo em primeiro plano via PresentMon (tools\\PresentMon). ativo=false desliga. minFps = taxa minima nos ultimos 3 s para o processo contar como jogo. excluir = nomes de processo a ignorar, alem da lista padrao (dwm, navegadores, launchers...).",
+    "ativo": true,
+    "minFps": 25,
+    "excluir": []
+  },
+  "ventoinhas": {
+    "Fan #1": "Bomba",
+    "Fan #2": "Radiador push",
+    "Fan #3": "Radiador pull",
+    "Fan #4": "Controladora"
+  }
+}

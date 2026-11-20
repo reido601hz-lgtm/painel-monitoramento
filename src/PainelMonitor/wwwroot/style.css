@@ -1,0 +1,425 @@
+/* Painel BROK - palco fixo 1024x600, tudo com position:absolute (WebKit do Android 4.2).
+   Grade: colunas em left 12 / 350 / 688 (largura 324 com borda).
+   Sem flexbox, float, calc() ou grid.
+
+   O palco e escalado pelo script do index.html com a propriedade zoom (nao transform,
+   que embaca o texto). O WebView aplica tamanho minimo de fonte de ~8px CSS (~13,8px
+   reais) e o tablet e de 7" a 1024x600 (~170 ppi): texto fino e pequeno sai suave. Por isso
+   (escolha do usuario em 2026-11-18, estilo "K") os textos principais sao 22px brancos,
+   nenhum texto fica abaixo de 16px, e a linha de frametime (futura) usa 3px. */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: #060b14;
+  overflow: hidden;
+}
+
+body {
+  color: #ffffff;
+  font-family: sans-serif;
+}
+
+#stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1024px;
+  height: 600px;
+}
+
+/* ---------------- topo ---------------- */
+
+.topo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1024px;
+  height: 46px;
+}
+
+.marca {
+  position: absolute;
+  left: 20px;
+  top: 0;
+  line-height: 46px;
+  font-size: 28px;
+  font-weight: bold;
+  letter-spacing: 5px;
+  color: #00F0FF;
+  text-transform: uppercase;
+}
+
+.sub {
+  position: absolute;
+  left: 132px;
+  top: 0;
+  line-height: 50px;
+  font-size: 16px;
+  letter-spacing: 2px;
+  color: #9fb4c7;
+}
+
+.chip {
+  position: absolute;
+  left: 614px;
+  top: 8px;
+  width: 256px;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  font-size: 16px;
+  color: #e6edf3;
+  background: #0b1624;
+  border: 1px solid #173147;
+  border-radius: 16px;
+}
+
+.dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 8px;
+  border-radius: 5px;
+  background: #4ade80;
+  vertical-align: 0;
+}
+
+.dot.off { background: #ef4444; }
+
+.relogio {
+  position: absolute;
+  left: 880px;
+  top: 7px;
+  width: 132px;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  font-family: monospace;
+  font-weight: bold;
+  font-size: 24px;
+  color: #00F0FF;
+  background: #0b1624;
+  border: 1px solid #1f4a63;
+  border-radius: 6px;
+}
+
+/* ---------------- cards ---------------- */
+
+.card {
+  position: absolute;
+  width: 322px;
+  background: #0d1828;
+  border: 1px solid #173147;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.c1 { left: 12px; }
+.c2 { left: 350px; }
+.c3 { left: 688px; }
+
+.tit {
+  position: absolute;
+  left: 16px;
+  top: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #b4c4d3;
+}
+
+.selo {
+  position: absolute;
+  right: 14px;
+  top: 7px;
+  padding: 2px 9px;
+  font-family: monospace;
+  font-weight: bold;
+  font-size: 16px;
+  color: #22d3ee;
+  background: #0b2233;
+  border: 1px solid #1f4a63;
+  border-radius: 10px;
+}
+
+/* tempo ligado: rotulo discreto + valor grande em destaque */
+.selo2 {
+  position: absolute;
+  right: 16px;
+  top: 6px;
+  font-size: 16px;
+  color: #c8d6e2;
+}
+
+.selo2 span {
+  font-size: 16px;
+  color: #c8d6e2;
+}
+
+.selo2 b {
+  font-size: 24px;
+  font-weight: bold;
+  color: #22d3ee;
+}
+
+/* ---------------- gauges (anel grosso, ponta reta: estilo "Q") ---------------- */
+
+.gauge {
+  position: absolute;
+  left: 81px;
+  top: 38px;
+  width: 160px;
+  height: 160px;
+}
+
+.gauge svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.gauge-txt {
+  position: absolute;
+  left: 0;
+  top: 50px;
+  width: 160px;
+  text-align: center;
+}
+
+.gauge-val {
+  font-size: 38px;
+  line-height: 42px;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.gauge-rot {
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  color: #9fb4c7;
+}
+
+.gauge-nome {
+  position: absolute;
+  left: 0;
+  top: 198px;
+  width: 322px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.gauge-meta {
+  position: absolute;
+  left: 0;
+  top: 206px;
+  width: 322px;
+  text-align: center;
+  font-size: 32px;
+  color: #ffffff;
+}
+
+.gauge-meta b { font-weight: bold; }
+.gauge-meta .vt { color: #4ade80; }
+.gauge-meta .vt.ok   { color: #4ade80; }
+.gauge-meta .vt.warn { color: #f59e0b; }
+.gauge-meta .vt.crit { color: #ef4444; }
+.gauge-meta .vw { color: #22d3ee; }
+.gauge-meta .vc { color: #4ade80; }
+
+.gauge-meta small {
+  font-size: 20px;
+  color: #b4c4d3;
+  margin-left: 2px;
+}
+
+.gauge-meta .sep {
+  display: inline-block;
+  width: 1px;
+  height: 18px;
+  background: #24405a;
+  margin: 0 9px;
+  vertical-align: -2px;
+}
+
+/* ---------------- memoria / nucleos ---------------- */
+
+.m {
+  position: absolute;
+  left: 16px;
+  width: 290px;
+}
+
+.lbl {
+  position: relative;
+  height: 24px;
+  line-height: 24px;
+  font-size: 20px;
+  color: #ffffff;
+}
+
+.lbl b {
+  position: absolute;
+  right: 0;
+  top: 0;
+  font-family: monospace;
+  font-weight: bold;
+  color: #22d3ee;
+}
+
+.bar {
+  height: 10px;
+  margin-top: 6px;
+  background: #0a1320;
+  border: 1px solid #16283a;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: #00F0FF;
+  border-radius: 5px;
+}
+
+.bar i.warn { background: #f59e0b; }
+.bar i.crit { background: #ef4444; }
+
+.cores {
+  height: 80px;
+  font-size: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  background: #09111d;
+  border-radius: 6px;
+}
+
+.core {
+  display: inline-block;
+  height: 80px;
+  position: relative;
+  vertical-align: bottom;
+}
+
+.core i {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 0%;
+  background: #22d3ee;
+  border-radius: 3px 3px 0 0;
+}
+
+/* ---------------- frametime (modo jogo; substitui os nucleos) ---------------- */
+
+.ft-fps {
+  position: absolute;
+  left: 16px;
+  top: 30px;
+  width: 92px;
+  font-size: 40px;
+  line-height: 44px;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.ft-lbl {
+  position: absolute;
+  left: 16px;
+  top: 72px;
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  color: #9fb4c7;
+}
+
+.ft-low {
+  position: absolute;
+  left: 16px;
+  top: 96px;
+  font-size: 18px;
+  color: #c8d6e2;
+}
+
+.ft-low b {
+  font-family: monospace;
+  font-weight: bold;
+  color: #fb923c;
+}
+
+.ft-svg {
+  position: absolute;
+  left: 112px;
+  top: 32px;
+}
+
+.ft-cg {
+  position: absolute;
+  left: 112px;
+  top: 106px;
+  font-size: 16px;
+  color: #c8d6e2;
+  white-space: nowrap;
+}
+
+.ft-cg b {
+  font-family: monospace;
+  font-weight: bold;
+  color: #22d3ee;
+}
+
+/* ---------------- listas (texto 22px branco, estilo "K") ---------------- */
+
+.card ul {
+  position: absolute;
+  left: 16px;
+  top: 40px;
+  width: 290px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card li {
+  position: relative;
+  height: 36px;
+  line-height: 36px;
+  font-size: 22px;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  border-bottom: 1px solid #16283a;
+}
+
+.card li span { color: #ffffff; }
+
+.card li b {
+  position: absolute;
+  right: 0;
+  top: 0;
+  font-family: monospace;
+  font-weight: bold;
+  color: #22d3ee;
+  background: #0d1828;
+  padding-left: 6px;
+}
+
+.card li b.ok   { color: #4ade80; }
+.card li b.warn { color: #f59e0b; }
+.card li b.crit { color: #ef4444; }
+
+/* rede e discos: ate 7 linhas, entao a linha e o texto ficam um pouco menores (20px) */
+#io li {
+  height: 31px;
+  line-height: 31px;
+  font-size: 20px;
+}

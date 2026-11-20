@@ -1,0 +1,14 @@
+# build e publicacao
+bin/
+obj/
+app/
+app-new/
+app-old/
+
+# logs e relatorios de teste
+logs/
+*.log
+tools/FanTest/resultado.txt
+
+# binario de terceiros: baixar conforme tools/PresentMon/LEIAME.txt
+tools/PresentMon/*.exe

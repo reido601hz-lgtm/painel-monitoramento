@@ -1,0 +1,10 @@
+﻿PresentMon (console) - Intel Corporation, licenca MIT.
+Versao 2.6.0, arquivo PresentMon-2.6.0-x64.exe (980.320 bytes).
+Origem: https://github.com/GameTechDev/PresentMon/releases/tag/v2.6.0
+SHA-256: b2a706bc6ad475749e3b7e3409263aa1e6906d45bdcf993f6dbc0f660188f1af
+(igual ao digest da API do GitHub; assinatura Authenticode valida de Intel Corporation, conferida em 2026-11-18)
+
+Usado pelo FrameHub.cs para o FPS/frametime do painel. O painel confere este SHA-256 antes de cada
+execucao e nao inicia o PresentMon se for diferente. Para atualizar a versao: baixar o novo .exe,
+conferir hash e assinatura, trocar o nome/hash em FrameHub.cs (ExeRelativo e Sha256Padrao) ou usar
+"fps": {"exe": "...", "sha256": "..."} no config.json.

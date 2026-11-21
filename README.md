@@ -273,6 +273,24 @@ Porta padrão `8080`, sobrescrita pela variável `PAINEL_URL` (ex.:
   como *Public*, a regra precisa ser `-Profile Any`) e se a porta está
   `LISTENING` em `0.0.0.0`.
 
+## Consumo de recursos (2026-11-20)
+
+Medido com `Win32_PerfFormattedData_PerfProc_Process`, 60 amostras de ~1 s, 20 CPUs lógicas, tablet conectado:
+
+| | Antes (Server GC) | Depois (`ServerGarbageCollection=false`) |
+|---|---|---|
+| Memória privada do `PainelMonitor` | ~285-300 MB | ~57-78 MB |
+| Threads / handles | 63-65 / ~820 | 24-32 / ~600 |
+| CPU do `PainelMonitor` (média, % do PC) | 0,11% (sem jogo) | 0,04% (com jogo a 60 fps) |
+| CPU do PresentMon (média, % do PC) | 0,01% (sem jogo) | 0,05% (com jogo a 60 fps) |
+
+- O Web SDK liga o **Server GC** (um heap por núcleo; 20 aqui) e o painel ficava em ~300 MB. O `.csproj` agora
+  tem `<ServerGarbageCollection>false</ServerGarbageCollection>`. **O nome certo é `ServerGarbageCollection`**:
+  com `ServerGarbageCollector` o build ignora sem avisar e o `PainelMonitor.runtimeconfig.json` continua com
+  `"System.GC.Server": true` (confira esse arquivo em `app\` depois de publicar).
+- Não medido: jogo pesado (centenas de fps, onde o PresentMon processa mais quadros), efeito no FPS do jogo e
+  custo das consultas à GPU (NVML).
+
 ## Pendências conhecidas
 
 - O driver do RSM (`R0RemoteSystemMonitorServer`) segue instalado e em execução

@@ -9,6 +9,9 @@
     <InvariantGlobalization>true</InvariantGlobalization>
     <NoWarn>$(NoWarn);CA1416;CA2007</NoWarn>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- GC de estacao: o Web SDK liga o Server GC, que cria um heap por nucleo (20 aqui) e deixava o
+         processo em ~300 MB para um coletor que le sensores a 1 Hz. -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
   </PropertyGroup>
 
   <ItemGroup>

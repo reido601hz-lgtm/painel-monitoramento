@@ -155,6 +155,47 @@ comandos de controle) faz isso uma ventoinha por vez e restaura o padrão:
 - Relatório em `tools\FanTest\bin\Release\net8.0\resultado.txt`. Compilar: `dotnet build -c Release`
   (o `.exe` não acha o .NET do usuário; usar `dotnet FanTest.dll`, que é o que o `.ps1` faz).
 
+## Modo relógio: PC desligado (2026-11-22)
+
+Quando o servidor fica **15 s sem responder** (PC desligado, em repouso ou painel fora do ar), a página do
+tablet vira um **relógio digital minimalista em tela cheia** e **volta sozinha ao painel** no primeiro poll que
+der certo. Visual (pedido do usuário em 2026-11-22): fundo **preto**, tudo em **branco**, sem barra de segundos
+e sem segmentos apagados; `HH:MM` grande centralizado (os dois pontos ficam no eixo da tela, x = 512), segundos
+pequenos à direita, uma linha de data ("Domingo, 22 de novembro de 2026") e uma nota discreta em cinza no rodapé
+("PC desligado ou painel fora do ar · hora sincronizada em dd/mm às hh:mm"). O grupo hora + data fica no meio da
+altura. Só `wwwroot` mudou (HTML, CSS e `app.js`, bloco "modo relógio"); o servidor não foi tocado.
+
+- **De onde vem a hora:** o RTC do tablet está em 1970 (sem bateria), então a hora é a do PC aprendida enquanto
+  ele estava ligado (`offsetMs`, a mesma que o relógio do topo do painel usa, UTC-3 fixo). O relógio do sistema
+  do tablet continua contando, então a hora segue certa **até o tablet reiniciar**; a deriva do cristal é de
+  poucos segundos por dia (não medida). O rodapé mostra até quando a hora veio do PC. Sem sincronização mostra
+  "sem hora do PC" e nenhum dígito aceso (hora errada é pior que nenhuma).
+- **Dígitos em SVG de 7 segmentos**, não em texto: não dependem das fontes do Android 4.2. Redesenha na virada
+  de cada segundo da hora do PC.
+- **Guarda de 6 s em cada requisição** do poll: o WebKit do Android 4.2 pode ignorar `xhr.timeout`, e com o PC
+  desligado a conexão ficaria pendurada por minutos. Com a guarda o relógio entra em ~15 a 27 s.
+- **Limite conhecido:** só aparece se a página **já estava carregada** quando o PC desligou. Se o tablet
+  reiniciar com o PC desligado, o PainelKiosk (carrega a URL uma vez, sem retry nem página local; o fonte não
+  está no PC) mostra a página de erro do WebView e, de qualquer forma, o relógio do tablet estaria em 1970. O
+  Vigia reabre o app quando o PC volta. Corrigir isso exigiria refazer o APK com uma página local de fallback.
+- **Para o tablet ganhar a mudança** é preciso recarregar a página (reiniciar o app PainelKiosk por ADB ou
+  reiniciar o tablet): a página já aberta continua com o `app.js` antigo.
+- **Testado** no navegador a 1024x600 simulando o servidor fora do ar (requisição que falha e requisição que
+  nunca responde) e **no tablet de verdade** em 2026-11-22 com `tools\teste-relogio-tablet.ps1` (para o painel e
+  bloqueia a 8080 para o IP do tablet, sem resposta, como PC desligado; depois desfaz). Resultado, medido por
+  fotos via ADB: 21 s depois da queda ainda o painel com o chip "Sem conexão"; aos 36 s o relógio, com hora e
+  data certas (o RTC do tablet está em 1970, a hora veio do offset) e os dois pontos piscando; o painel voltou
+  sozinho em até 12 s depois do servidor subir. A versão minimalista (preto e branco, hora centralizada) foi
+  refeita e testada do mesmo jeito no tablet: relógio já na tela 30 s depois da queda, hora certa, painel de volta
+  em até 12 s. Detalhe do 7 segmentos: sem os segmentos apagados, o "1" ficava colado à
+  direita da sua casa e abria um vão ("2 1:27"); a pedido do usuário o "1" agora é deslocado para o meio da casa
+  (`setDigito`: `translate` nos segmentos b e c quando o valor é 1). Esse ajuste foi conferido só no navegador a
+  1024x600, não no tablet. **Não testado** com o PC desligado de verdade (o teste simula isso do lado do
+  servidor) nem depois de muitas horas (deriva do relógio do tablet).
+- **Cache:** o servidor manda `ETag` e `Last-Modified`, sem `Cache-Control`. O tablet pegou o `app.js` novo logo
+  depois de reiniciar o app, mas se algum dia ele insistir no JS antigo, a saída é `Cache-Control: no-cache` nos
+  arquivos estáticos (`UseStaticFiles` no `Program.cs`).
+
 ## Cores das temperaturas (2026-11-18)
 
 Verde = normal, **laranja = atenção**, **vermelho = perto do limite**. Os limites são por tipo de sensor

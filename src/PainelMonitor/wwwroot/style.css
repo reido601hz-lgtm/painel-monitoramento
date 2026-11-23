@@ -423,3 +423,45 @@ body {
   line-height: 31px;
   font-size: 20px;
 }
+
+/* ---------------- modo relogio (PC desligado) ---------------- */
+
+/* minimalista (pedido do usuario em 2026-11-22): fundo preto, letras brancas, hora e data
+   centralizadas na tela. Cobre o painel inteiro; os digitos (HH:MM grandes e SS pequeno) sao
+   SVG montado pelo app.js. O grupo hora + data ocupa y 140 a 460, ou seja, o meio da tela. */
+#modoRelogio {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1024px;
+  height: 600px;
+  background: #000000;
+}
+
+#relSvg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.rel-data {
+  position: absolute;
+  left: 0;
+  top: 404px;
+  width: 1024px;
+  height: 56px;
+  line-height: 56px;
+  text-align: center;
+  font-size: 44px;
+  color: #ffffff;
+}
+
+.rel-nota {
+  position: absolute;
+  left: 0;
+  top: 546px;
+  width: 1024px;
+  text-align: center;
+  font-size: 18px;
+  color: #6b6b6b;
+}

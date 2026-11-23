@@ -365,23 +365,34 @@
 
     var xhr = new XMLHttpRequest();
     var finished = false;
+    var guarda = null;
 
     function done(okState) {
       if (finished) return;
       finished = true;
+      if (guarda) clearTimeout(guarda);
       busy = false;
       if (okState) {
         fails = 0;
+        offlineDesde = 0;
         setOffline(false);
+        if (modoRelogio) sairRelogio(); /* render(data) ja rodou: o painel volta com dados novos */
       } else {
         fails++;
         if (fails >= 2) setOffline(true);
+        verificarOffline();
       }
       setTimeout(poll, INTERVAL);
     }
 
     xhr.open('GET', API + '?t=' + new Date().getTime(), true);
     xhr.timeout = 4000;
+    /* o WebKit do Android 4.2 pode ignorar xhr.timeout: com o PC desligado a conexao ficaria
+       pendurada por minutos e o modo relogio nunca entraria. Esta guarda garante a falha. */
+    guarda = setTimeout(function () {
+      done(false);
+      try { xhr.abort(); } catch (eAb) { }
+    }, 6000);
 
     xhr.onreadystatechange = function () {
       if (xhr.readyState !== 4) return;
@@ -543,6 +554,7 @@
     } catch (e) { }
     if (isNaN(srv) && d && d.ts) srv = d.ts * 1000;
     if (isNaN(srv)) return;
+    relUltimaSincMs = srv; /* mostrado no modo relogio: ate quando a hora veio do PC */
     var off = srv - new Date().getTime();
     if (offsetMs === null || Math.abs(off - offsetMs) > 2500) offsetMs = off;
   }
@@ -555,6 +567,201 @@
     var d = new Date(new Date().getTime() + offsetMs + FUSO_MS);
     function p(n) { return n < 10 ? '0' + n : '' + n; }
     el.innerHTML = p(d.getUTCHours()) + ':' + p(d.getUTCMinutes()) + ':' + p(d.getUTCSeconds());
+  }
+
+  /* ---------------- modo relogio (PC desligado) ---------------- */
+
+  /* Sem resposta do servidor por OFFLINE_MS, o painel vira um relogio digital em tela cheia
+     (hora e data) e volta sozinho no primeiro poll que der certo. A hora vem do offsetMs
+     aprendido enquanto o PC estava ligado: o relogio do tablet continua contando (so' o RTC
+     perde a data), entao a hora segue certa ate o tablet reiniciar; a deriva e' de poucos
+     segundos por dia. O poll continua rodando durante o modo relogio. Digitos em SVG de 7
+     segmentos (nao dependem das fontes do tablet). */
+  var OFFLINE_MS = 15000;
+  var offlineDesde = 0;
+  var modoRelogio = false;
+  var relTimer = null;
+  var relMontado = false;
+  var relDig = [];
+  var relPontos = [];
+  var relCache = { data: null, nota: null };
+  var relUltimaSincMs = 0; /* hora do servidor (UTC, ms) da ultima resposta boa */
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  var COR_LIGADO = '#ffffff';
+  var COR_SEG = '#ffffff';
+  var COR_APAGADO = '#000000'; /* segmento apagado some no fundo preto (visual minimalista) */
+  /* segmentos a b c d e f g de cada digito */
+  var SEG_MAPA = ['1111110', '0110000', '1101101', '1111001', '0110011',
+                  '1011011', '1011111', '1110000', '1111111', '1111011'];
+  var DIAS = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira',
+              'sexta-feira', 'sábado'];
+  var MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho',
+               'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+
+  function p2(n) { return n < 10 ? '0' + n : '' + n; }
+
+  /* hexagono de um segmento num digito de w x h com espessura t (pontas chanfradas) */
+  function segPontos(i, w, h, t) {
+    var s = t / 2;
+    var g = t * 0.2;
+    var m = h / 2;
+    function hor(y) {
+      return [[s, y], [w - s, y], [w, y + s], [w - s, y + t], [s, y + t], [0, y + s]];
+    }
+    function ver(x, y0, y1) {
+      return [[x + s, y0], [x + t, y0 + s], [x + t, y1 - s], [x + s, y1], [x, y1 - s], [x, y0 + s]];
+    }
+    var c0 = t + g;
+    var c1 = m - s - g;
+    var b0 = m + s + g;
+    var b1 = h - t - g;
+    if (i === 0) return hor(0);
+    if (i === 1) return ver(w - t, c0, c1);
+    if (i === 2) return ver(w - t, b0, b1);
+    if (i === 3) return hor(h - t);
+    if (i === 4) return ver(0, b0, b1);
+    if (i === 5) return ver(0, c0, c1);
+    return hor(m - s);
+  }
+
+  function criaDigito(svg, x, y, w, h, t, cor) {
+    var segs = [];
+    for (var i = 0; i < 7; i++) {
+      var pts = segPontos(i, w, h, t);
+      var txt = '';
+      for (var k = 0; k < pts.length; k++) {
+        txt += (x + pts[k][0]).toFixed(1) + ',' + (y + pts[k][1]).toFixed(1) + ' ';
+      }
+      var pg = document.createElementNS(SVGNS, 'polygon');
+      pg.setAttribute('points', txt);
+      pg.setAttribute('fill', COR_APAGADO);
+      svg.appendChild(pg);
+      segs.push(pg);
+    }
+    /* dx: quanto o "1" (so' os segmentos b e c, colados na direita) anda para ficar no meio */
+    return { segs: segs, cor: cor, v: -2, dx: (w - t) / 2 };
+  }
+
+  function setDigito(dig, v) {
+    if (dig.v === v) return;
+    dig.v = v;
+    var mapa = v >= 0 ? SEG_MAPA[v] : '0000000';
+    for (var i = 0; i < 7; i++) {
+      dig.segs[i].setAttribute('fill', mapa.charAt(i) === '1' ? dig.cor : COR_APAGADO);
+    }
+    /* o "1" centrado na casa: sem os segmentos apagados ele ficava na direita e abria um vao
+       ("2 1:27") */
+    var tr = 'translate(' + (v === 1 ? -dig.dx : 0) + ',0)';
+    dig.segs[1].setAttribute('transform', tr);
+    dig.segs[2].setAttribute('transform', tr);
+  }
+
+  function montarRelogio() {
+    if (relMontado) return;
+    var svg = get('relSvg');
+    if (!svg || !document.createElementNS) return;
+    /* HH:MM grandes (124 x 224) centralizados na tela (os dois pontos ficam em x = 512, o mesmo
+       eixo da data) e SS pequeno (52 x 94) a direita, alinhado pela base. Digitos de y 140 a
+       364; com a data embaixo o grupo fica no meio da altura (140 a 460). */
+    relDig = [
+      criaDigito(svg, 211, 140, 124, 224, 22, COR_LIGADO),
+      criaDigito(svg, 353, 140, 124, 224, 22, COR_LIGADO),
+      criaDigito(svg, 547, 140, 124, 224, 22, COR_LIGADO),
+      criaDigito(svg, 689, 140, 124, 224, 22, COR_LIGADO),
+      criaDigito(svg, 847, 270, 52, 94, 10, COR_SEG),
+      criaDigito(svg, 909, 270, 52, 94, 10, COR_SEG)
+    ];
+    var ys = [214, 290];
+    for (var c = 0; c < 2; c++) {
+      var ci = document.createElementNS(SVGNS, 'circle');
+      ci.setAttribute('cx', '512');
+      ci.setAttribute('cy', '' + ys[c]);
+      ci.setAttribute('r', '9');
+      ci.setAttribute('fill', COR_LIGADO);
+      svg.appendChild(ci);
+      relPontos.push(ci);
+    }
+    relMontado = true;
+  }
+
+  function desenharRelogio() {
+    if (!modoRelogio || !relMontado) return;
+    var ok = offsetMs !== null; /* sem sincronizar nao mostra hora */
+    var d = ok ? new Date(new Date().getTime() + offsetMs + FUSO_MS) : null;
+    var hh = ok ? d.getUTCHours() : -1;
+    var mi = ok ? d.getUTCMinutes() : -1;
+    var ss = ok ? d.getUTCSeconds() : -1;
+    setDigito(relDig[0], ok ? Math.floor(hh / 10) : -1);
+    setDigito(relDig[1], ok ? hh % 10 : -1);
+    setDigito(relDig[2], ok ? Math.floor(mi / 10) : -1);
+    setDigito(relDig[3], ok ? mi % 10 : -1);
+    setDigito(relDig[4], ok ? Math.floor(ss / 10) : -1);
+    setDigito(relDig[5], ok ? ss % 10 : -1);
+    var op = (ok && ss % 2 === 0) ? '1' : '0.25'; /* dois pontos piscando a cada segundo */
+    relPontos[0].setAttribute('fill-opacity', op);
+    relPontos[1].setAttribute('fill-opacity', op);
+
+    /* uma linha so: "Domingo, 22 de novembro de 2026" */
+    var data = 'sem hora do PC';
+    if (ok) {
+      var dia = DIAS[d.getUTCDay()];
+      data = dia.charAt(0).toUpperCase() + dia.substring(1) + ', ' + d.getUTCDate() + ' de ' +
+             MESES[d.getUTCMonth()] + ' de ' + d.getUTCFullYear();
+    }
+    if (data !== relCache.data) { get('relData').textContent = data; relCache.data = data; }
+
+    /* nota discreta no rodape: por que o relogio esta na tela e ate quando a hora veio do PC */
+    var nota = 'PC desligado ou painel fora do ar';
+    if (relUltimaSincMs) {
+      var u = new Date(relUltimaSincMs + FUSO_MS);
+      nota += ' · hora sincronizada em ' + p2(u.getUTCDate()) + '/' + p2(u.getUTCMonth() + 1) +
+              ' às ' + p2(u.getUTCHours()) + ':' + p2(u.getUTCMinutes());
+    }
+    if (nota !== relCache.nota) { get('relNota').textContent = nota; relCache.nota = nota; }
+  }
+
+  /* redesenha na virada de cada segundo da hora do PC (e nao a cada 1000 ms soltos do tablet) */
+  function agendarRelogio() {
+    if (!modoRelogio) return;
+    var falta = 1000;
+    if (offsetMs !== null) {
+      var ms = (new Date().getTime() + offsetMs) % 1000;
+      if (ms < 0) ms += 1000;
+      falta = 1000 - ms + 20;
+    }
+    relTimer = setTimeout(function () {
+      desenharRelogio();
+      agendarRelogio();
+    }, falta);
+  }
+
+  function entrarRelogio() {
+    if (modoRelogio) return;
+    montarRelogio();
+    if (!relMontado) return; /* sem SVG DOM: segue no painel com o aviso de falha */
+    modoRelogio = true;
+    document.body.style.background = '#000000'; /* preto tambem fora do palco, se sobrar margem */
+    get('modoRelogio').style.display = 'block';
+    desenharRelogio();
+    agendarRelogio();
+  }
+
+  function sairRelogio() {
+    if (!modoRelogio) return;
+    modoRelogio = false;
+    if (relTimer) { clearTimeout(relTimer); relTimer = null; }
+    get('modoRelogio').style.display = 'none';
+    document.body.style.background = '';
+  }
+
+  /* chamado a cada poll que falha: conta ha quanto tempo o servidor nao responde */
+  function verificarOffline() {
+    var agora = new Date().getTime();
+    if (!offlineDesde || agora < offlineDesde) {
+      offlineDesde = agora;
+    } else if (!modoRelogio && agora - offlineDesde >= OFFLINE_MS) {
+      entrarRelogio();
+    }
   }
 
   function boot() {

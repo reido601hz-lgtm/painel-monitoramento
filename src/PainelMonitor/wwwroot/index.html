@@ -107,6 +107,15 @@
     <ul id="io"></ul>
   </div>
 
+  <!-- Modo relogio: aparece sozinho quando o servidor (PC) fica 15 s sem responder e some no
+       primeiro poll que der certo (app.js, "modo relogio"). Digitos desenhados em SVG para nao
+       depender das fontes do tablet. -->
+  <div id="modoRelogio" style="display:none;">
+    <svg id="relSvg" width="1024" height="600" viewBox="0 0 1024 600"></svg>
+    <div class="rel-data" id="relData"></div>
+    <div class="rel-nota" id="relNota"></div>
+  </div>
+
 </div>
 
 <script src="app.js"></script>

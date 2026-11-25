@@ -602,37 +602,37 @@
 
   function p2(n) { return n < 10 ? '0' + n : '' + n; }
 
-  /* hexagono de um segmento num digito de w x h com espessura t (pontas chanfradas) */
-  function segPontos(i, w, h, t) {
-    var s = t / 2;
-    var g = t * 0.2;
-    var m = h / 2;
-    function hor(y) {
-      return [[s, y], [w - s, y], [w, y + s], [w - s, y + t], [s, y + t], [0, y + s]];
-    }
-    function ver(x, y0, y1) {
-      return [[x + s, y0], [x + t, y0 + s], [x + t, y1 - s], [x + s, y1], [x, y1 - s], [x, y0 + s]];
-    }
-    var c0 = t + g;
-    var c1 = m - s - g;
-    var b0 = m + s + g;
-    var b1 = h - t - g;
-    if (i === 0) return hor(0);
-    if (i === 1) return ver(w - t, c0, c1);
-    if (i === 2) return ver(w - t, b0, b1);
-    if (i === 3) return hor(h - t);
-    if (i === 4) return ver(0, b0, b1);
-    if (i === 5) return ver(0, c0, c1);
-    return hor(m - s);
+  /* Poligonos dos 7 segmentos no desenho do display de referencia do usuario, medidos na imagem
+     (digito de 165,5 x 301 px, segmento de ~35): os quatro cantos sao em esquadria de 45 graus com
+     folga uniforme (a barra de cima e a vertical se encontram numa diagonal), as verticais e a
+     barra do meio terminam em ponta no eixo. As coordenadas sao as da referencia e escalam com a
+     largura e a altura do digito. a b c d e f g = topo, cima-dir, baixo-dir, base, baixo-esq,
+     cima-esq, meio. */
+  var REF_W = 165.5;
+  var REF_H = 301;
+
+  function segRef(i) {
+    var W = REF_W;
+    var H = REF_H;
+    var cy = H / 2;
+    if (i === 0) return [[21.5, 0], [W - 21.5, 0], [W - 13.5, 9], [W - 40.5, 36], [40.5, 36], [13.5, 9]];
+    if (i === 1) return [[W - 6.5, 14], [W - 34.5, 42], [W - 34.5, cy - 25], [W - 16.5, cy - 7], [W, cy - 23], [W, 20]];
+    if (i === 2) return [[W - 6.5, H - 14], [W - 34.5, H - 42], [W - 34.5, cy + 25], [W - 16.5, cy + 7], [W, cy + 23], [W, H - 20]];
+    if (i === 3) return [[21.5, H], [W - 21.5, H], [W - 13.5, H - 9], [W - 40.5, H - 36], [40.5, H - 36], [13.5, H - 9]];
+    if (i === 4) return [[6.5, H - 14], [34.5, H - 42], [34.5, cy + 25], [16.5, cy + 7], [0, cy + 23], [0, H - 20]];
+    if (i === 5) return [[6.5, 14], [34.5, 42], [34.5, cy - 25], [16.5, cy - 7], [0, cy - 23], [0, 20]];
+    return [[23.5, cy], [40.5, cy - 17], [W - 40.5, cy - 17], [W - 23.5, cy], [W - 40.5, cy + 17], [40.5, cy + 17]];
   }
 
-  function criaDigito(svg, x, y, w, h, t, cor) {
+  function criaDigito(svg, x, y, w, h, cor) {
     var segs = [];
+    var kx = w / REF_W;
+    var ky = h / REF_H;
     for (var i = 0; i < 7; i++) {
-      var pts = segPontos(i, w, h, t);
+      var pts = segRef(i);
       var txt = '';
       for (var k = 0; k < pts.length; k++) {
-        txt += (x + pts[k][0]).toFixed(1) + ',' + (y + pts[k][1]).toFixed(1) + ' ';
+        txt += (x + pts[k][0] * kx).toFixed(1) + ',' + (y + pts[k][1] * ky).toFixed(1) + ' ';
       }
       var pg = document.createElementNS(SVGNS, 'polygon');
       pg.setAttribute('points', txt);
@@ -658,17 +658,17 @@
     if (relMontado) return;
     var svg = get('relSvg');
     if (!svg || !document.createElementNS) return;
-    /* HH:MM grandes (124 x 224, segmento de 26) centralizados na tela (os dois pontos ficam em
-       x = 512, o mesmo eixo da data) e SS pequeno (52 x 94, segmento de 11) a direita, alinhado
-       pela base. Digitos de y 140 a 364; com a data embaixo o grupo fica no meio da altura
-       (140 a 460). Dois pontos quadrados, como no display de referencia. */
+    /* HH:MM grandes (124 x 224) centralizados na tela (os dois pontos ficam em x = 512, o mesmo
+       eixo da data) e SS pequeno (52 x 94) a direita, alinhado pela base. Digitos de y 140 a 364;
+       com a data embaixo o grupo fica no meio da altura (140 a 460). Dois pontos quadrados, como
+       no display de referencia. */
     relDig = [
-      criaDigito(svg, 211, 140, 124, 224, 26, COR_LIGADO),
-      criaDigito(svg, 353, 140, 124, 224, 26, COR_LIGADO),
-      criaDigito(svg, 547, 140, 124, 224, 26, COR_LIGADO),
-      criaDigito(svg, 689, 140, 124, 224, 26, COR_LIGADO),
-      criaDigito(svg, 847, 270, 52, 94, 11, COR_SEG),
-      criaDigito(svg, 909, 270, 52, 94, 11, COR_SEG)
+      criaDigito(svg, 211, 140, 124, 224, COR_LIGADO),
+      criaDigito(svg, 353, 140, 124, 224, COR_LIGADO),
+      criaDigito(svg, 547, 140, 124, 224, COR_LIGADO),
+      criaDigito(svg, 689, 140, 124, 224, COR_LIGADO),
+      criaDigito(svg, 847, 270, 52, 94, COR_SEG),
+      criaDigito(svg, 909, 270, 52, 94, COR_SEG)
     ];
     var ys = [203, 279];
     for (var c = 0; c < 2; c++) {

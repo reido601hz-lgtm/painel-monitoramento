@@ -191,8 +191,16 @@ altura. Só `wwwroot` mudou (HTML, CSS e `app.js`, bloco "modo relógio"); o ser
   relógio parecia menor nas horas com "1", porque o "1" é fino. O usuário mandou uma imagem de referência de
   display LCD de 7 segmentos e o relógio passou a segui-la: segmentos apagados em cinza escuro completando o "8"
   (a largura do dígito fica sempre a mesma), "1" na direita da casa, segmentos mais grossos (26 de 124 de largura
-  nos dígitos grandes) e dois pontos **quadrados**. Conferido só no navegador a 1024x600 (horas 11:11 e 07:49
-  simuladas), não no tablet. **Não testado** com o PC desligado de verdade (o teste simula isso do lado do
+  nos dígitos grandes) e dois pontos **quadrados**. Conferido no navegador a 1024x600 (horas 11:11 e 07:49
+  simuladas) e **no tablet** em 2026-11-25 com o teste de queda do painel (hora 18:55, que tem "1"): relógio na
+  tela 31 s depois da queda, "1" na direita da casa com os segmentos apagados completando o "8", hora certa e
+  painel de volta em até 13 s depois do servidor subir. Depois o usuário mandou uma imagem do visual que
+  queria (o mesmo layout, com segmentos mais cheios) e o desenho dos segmentos foi refeito **medindo a imagem**
+  (`segRef` em `app.js`, dígito de referência de 165,5 x 301 px): cantos em esquadria de 45° com folga uniforme
+  (a barra de cima e a vertical se encontram numa diagonal), verticais e barra do meio terminando em ponta no
+  eixo. O desenho escala com a largura e a altura do dígito (grandes 124 x 224, segundos 52 x 94). Conferido no
+  navegador (18:55 simulado) e **no tablet** (19:05, 2026-11-25): relógio na tela 35 s depois da queda, cantos em
+  esquadria como na imagem, hora certa e painel de volta em até 21 s depois do servidor subir. **Não testado** com o PC desligado de verdade (o teste simula isso do lado do
   servidor) nem depois de muitas horas (deriva do relógio do tablet).
 - **Cache:** o servidor manda `ETag` e `Last-Modified`, sem `Cache-Control`. O tablet pegou o `app.js` novo logo
   depois de reiniciar o app, mas se algum dia ele insistir no JS antigo, a saída é `Cache-Control: no-cache` nos

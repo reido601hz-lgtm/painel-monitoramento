@@ -159,8 +159,8 @@ comandos de controle) faz isso uma ventoinha por vez e restaura o padrão:
 
 Quando o servidor fica **15 s sem responder** (PC desligado, em repouso ou painel fora do ar), a página do
 tablet vira um **relógio digital minimalista em tela cheia** e **volta sozinha ao painel** no primeiro poll que
-der certo. Visual (pedido do usuário em 2026-11-22): fundo **preto**, tudo em **branco**, sem barra de segundos
-e sem segmentos apagados; `HH:MM` grande centralizado (os dois pontos ficam no eixo da tela, x = 512), segundos
+der certo. Visual (pedido do usuário em 2026-11-22): fundo **preto**, dígitos em **branco** com os segmentos
+apagados em cinza escuro (`#2b2b2b`, como num LCD), sem barra de segundos; `HH:MM` grande centralizado (os dois pontos ficam no eixo da tela, x = 512), segundos
 pequenos à direita, uma linha de data ("Domingo, 22 de novembro de 2026") e uma nota discreta em cinza no rodapé
 ("PC desligado ou painel fora do ar · hora sincronizada em dd/mm às hh:mm"). O grupo hora + data fica no meio da
 altura. Só `wwwroot` mudou (HTML, CSS e `app.js`, bloco "modo relógio"); o servidor não foi tocado.
@@ -187,10 +187,12 @@ altura. Só `wwwroot` mudou (HTML, CSS e `app.js`, bloco "modo relógio"); o ser
   data certas (o RTC do tablet está em 1970, a hora veio do offset) e os dois pontos piscando; o painel voltou
   sozinho em até 12 s depois do servidor subir. A versão minimalista (preto e branco, hora centralizada) foi
   refeita e testada do mesmo jeito no tablet: relógio já na tela 30 s depois da queda, hora certa, painel de volta
-  em até 12 s. Detalhe do 7 segmentos: sem os segmentos apagados, o "1" ficava colado à
-  direita da sua casa e abria um vão ("2 1:27"); a pedido do usuário o "1" agora é deslocado para o meio da casa
-  (`setDigito`: `translate` nos segmentos b e c quando o valor é 1). Esse ajuste foi conferido só no navegador a
-  1024x600, não no tablet. **Não testado** com o PC desligado de verdade (o teste simula isso do lado do
+  em até 12 s. Fonte dos dígitos (2026-11-25): sem os segmentos apagados (e depois com o "1" centralizado) o
+  relógio parecia menor nas horas com "1", porque o "1" é fino. O usuário mandou uma imagem de referência de
+  display LCD de 7 segmentos e o relógio passou a segui-la: segmentos apagados em cinza escuro completando o "8"
+  (a largura do dígito fica sempre a mesma), "1" na direita da casa, segmentos mais grossos (26 de 124 de largura
+  nos dígitos grandes) e dois pontos **quadrados**. Conferido só no navegador a 1024x600 (horas 11:11 e 07:49
+  simuladas), não no tablet. **Não testado** com o PC desligado de verdade (o teste simula isso do lado do
   servidor) nem depois de muitas horas (deriva do relógio do tablet).
 - **Cache:** o servidor manda `ETag` e `Last-Modified`, sem `Cache-Control`. O tablet pegou o `app.js` novo logo
   depois de reiniciar o app, mas se algum dia ele insistir no JS antigo, a saída é `Cache-Control: no-cache` nos

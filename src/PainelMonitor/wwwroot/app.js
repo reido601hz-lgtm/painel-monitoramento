@@ -589,7 +589,9 @@
   var SVGNS = 'http://www.w3.org/2000/svg';
   var COR_LIGADO = '#ffffff';
   var COR_SEG = '#ffffff';
-  var COR_APAGADO = '#000000'; /* segmento apagado some no fundo preto (visual minimalista) */
+  /* segmento apagado em cinza bem escuro: o "8" inteiro continua visivel e o digito 1 nao
+     faz o relogio parecer menor (fonte de 7 segmentos de LCD, referencia do usuario) */
+  var COR_APAGADO = '#2b2b2b';
   /* segmentos a b c d e f g de cada digito */
   var SEG_MAPA = ['1111110', '0110000', '1101101', '1111001', '0110011',
                   '1011011', '1011111', '1110000', '1111111', '1111011'];
@@ -638,10 +640,11 @@
       svg.appendChild(pg);
       segs.push(pg);
     }
-    /* dx: quanto o "1" (so' os segmentos b e c, colados na direita) anda para ficar no meio */
-    return { segs: segs, cor: cor, v: -2, dx: (w - t) / 2 };
+    return { segs: segs, cor: cor, v: -2 };
   }
 
+  /* o "1" fica na direita da casa (segmentos b e c), como num display LCD de verdade; os
+     segmentos apagados completam o "8" e mantem a largura do digito */
   function setDigito(dig, v) {
     if (dig.v === v) return;
     dig.v = v;
@@ -649,34 +652,31 @@
     for (var i = 0; i < 7; i++) {
       dig.segs[i].setAttribute('fill', mapa.charAt(i) === '1' ? dig.cor : COR_APAGADO);
     }
-    /* o "1" centrado na casa: sem os segmentos apagados ele ficava na direita e abria um vao
-       ("2 1:27") */
-    var tr = 'translate(' + (v === 1 ? -dig.dx : 0) + ',0)';
-    dig.segs[1].setAttribute('transform', tr);
-    dig.segs[2].setAttribute('transform', tr);
   }
 
   function montarRelogio() {
     if (relMontado) return;
     var svg = get('relSvg');
     if (!svg || !document.createElementNS) return;
-    /* HH:MM grandes (124 x 224) centralizados na tela (os dois pontos ficam em x = 512, o mesmo
-       eixo da data) e SS pequeno (52 x 94) a direita, alinhado pela base. Digitos de y 140 a
-       364; com a data embaixo o grupo fica no meio da altura (140 a 460). */
+    /* HH:MM grandes (124 x 224, segmento de 26) centralizados na tela (os dois pontos ficam em
+       x = 512, o mesmo eixo da data) e SS pequeno (52 x 94, segmento de 11) a direita, alinhado
+       pela base. Digitos de y 140 a 364; com a data embaixo o grupo fica no meio da altura
+       (140 a 460). Dois pontos quadrados, como no display de referencia. */
     relDig = [
-      criaDigito(svg, 211, 140, 124, 224, 22, COR_LIGADO),
-      criaDigito(svg, 353, 140, 124, 224, 22, COR_LIGADO),
-      criaDigito(svg, 547, 140, 124, 224, 22, COR_LIGADO),
-      criaDigito(svg, 689, 140, 124, 224, 22, COR_LIGADO),
-      criaDigito(svg, 847, 270, 52, 94, 10, COR_SEG),
-      criaDigito(svg, 909, 270, 52, 94, 10, COR_SEG)
+      criaDigito(svg, 211, 140, 124, 224, 26, COR_LIGADO),
+      criaDigito(svg, 353, 140, 124, 224, 26, COR_LIGADO),
+      criaDigito(svg, 547, 140, 124, 224, 26, COR_LIGADO),
+      criaDigito(svg, 689, 140, 124, 224, 26, COR_LIGADO),
+      criaDigito(svg, 847, 270, 52, 94, 11, COR_SEG),
+      criaDigito(svg, 909, 270, 52, 94, 11, COR_SEG)
     ];
-    var ys = [214, 290];
+    var ys = [203, 279];
     for (var c = 0; c < 2; c++) {
-      var ci = document.createElementNS(SVGNS, 'circle');
-      ci.setAttribute('cx', '512');
-      ci.setAttribute('cy', '' + ys[c]);
-      ci.setAttribute('r', '9');
+      var ci = document.createElementNS(SVGNS, 'rect');
+      ci.setAttribute('x', '501');
+      ci.setAttribute('y', '' + ys[c]);
+      ci.setAttribute('width', '22');
+      ci.setAttribute('height', '22');
       ci.setAttribute('fill', COR_LIGADO);
       svg.appendChild(ci);
       relPontos.push(ci);
